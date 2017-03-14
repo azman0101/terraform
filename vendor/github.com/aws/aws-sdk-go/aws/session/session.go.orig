@@ -58,7 +58,7 @@ func New(cfgs ...*aws.Config) *Session {
 	envCfg := loadEnvConfig()
 
 	if envCfg.EnableSharedConfig {
-		s, err := newSession(Options{}, envCfg, cfgs...)
+		s, err := newSession(envCfg, cfgs...)
 		if err != nil {
 			// Old session.New expected all errors to be discovered when
 			// a request is made, and would report the errors then. This
@@ -79,7 +79,7 @@ func New(cfgs ...*aws.Config) *Session {
 		return s
 	}
 
-	return deprecatedNewSession(cfgs...)
+	return oldNewSession(cfgs...)
 }
 
 // NewSession returns a new Session created from SDK defaults, config files,
@@ -101,7 +101,11 @@ func NewSession(cfgs ...*aws.Config) (*Session, error) {
 	opts := Options{}
 	opts.Config.MergeIn(cfgs...)
 
+<<<<<<< HEAD
+	return newSession(envCfg, cfgs...)
+=======
 	return NewSessionWithOptions(opts)
+>>>>>>> f9893ab8f... provider/aws: Bump aws/sdk to 1.7.9. Fixes at least 1 RDS bug
 }
 
 // SharedConfigState provides the ability to optionally override the state
@@ -154,6 +158,8 @@ type Options struct {
 	// will allow you to override the AWS_SDK_LOAD_CONFIG environment variable
 	// and enable or disable the shared config functionality.
 	SharedConfigState SharedConfigState
+<<<<<<< HEAD
+=======
 
 	// When the SDK's shared config is configured to assume a role with MFA
 	// this option is required in order to provide the mechanism that will
@@ -189,6 +195,7 @@ type Options struct {
 	// to also enable this feature. CustomCABundle session option field has priority
 	// over the AWS_CA_BUNDLE environment variable, and will be used if both are set.
 	CustomCABundle io.Reader
+>>>>>>> f9893ab8f... provider/aws: Bump aws/sdk to 1.7.9. Fixes at least 1 RDS bug
 }
 
 // NewSessionWithOptions returns a new Session created from SDK defaults, config files,
@@ -203,23 +210,23 @@ type Options struct {
 // to be built with retrieving credentials with AssumeRole set in the config.
 //
 //     // Equivalent to session.New
-//     sess := session.Must(session.NewSessionWithOptions(session.Options{}))
+//     sess, err := session.NewSessionWithOptions(session.Options{})
 //
 //     // Specify profile to load for the session's config
-//     sess := session.Must(session.NewSessionWithOptions(session.Options{
+//     sess, err := session.NewSessionWithOptions(session.Options{
 //          Profile: "profile_name",
-//     }))
+//     })
 //
 //     // Specify profile for config and region for requests
-//     sess := session.Must(session.NewSessionWithOptions(session.Options{
+//     sess, err := session.NewSessionWithOptions(session.Options{
 //          Config: aws.Config{Region: aws.String("us-east-1")},
 //          Profile: "profile_name",
-//     }))
+//     })
 //
 //     // Force enable Shared Config support
-//     sess := session.Must(session.NewSessionWithOptions(session.Options{
+//     sess, err := session.NewSessionWithOptions(session.Options{
 //         SharedConfigState: SharedConfigEnable,
-//     }))
+//     })
 func NewSessionWithOptions(opts Options) (*Session, error) {
 	var envCfg envConfig
 	if opts.SharedConfigState == SharedConfigEnable {
@@ -239,6 +246,9 @@ func NewSessionWithOptions(opts Options) (*Session, error) {
 		envCfg.EnableSharedConfig = true
 	}
 
+<<<<<<< HEAD
+	return newSession(envCfg, &opts.Config)
+=======
 	// Only use AWS_CA_BUNDLE if session option is not provided.
 	if len(envCfg.CustomCABundle) != 0 && opts.CustomCABundle == nil {
 		f, err := os.Open(envCfg.CustomCABundle)
@@ -251,6 +261,7 @@ func NewSessionWithOptions(opts Options) (*Session, error) {
 	}
 
 	return newSession(opts, envCfg, &opts.Config)
+>>>>>>> f9893ab8f... provider/aws: Bump aws/sdk to 1.7.9. Fixes at least 1 RDS bug
 }
 
 // Must is a helper function to ensure the Session is valid and there was no
@@ -268,7 +279,7 @@ func Must(sess *Session, err error) *Session {
 	return sess
 }
 
-func deprecatedNewSession(cfgs ...*aws.Config) *Session {
+func oldNewSession(cfgs ...*aws.Config) *Session {
 	cfg := defaults.Config()
 	handlers := defaults.Handlers()
 
@@ -295,7 +306,7 @@ func deprecatedNewSession(cfgs ...*aws.Config) *Session {
 	return s
 }
 
-func newSession(opts Options, envCfg envConfig, cfgs ...*aws.Config) (*Session, error) {
+func newSession(envCfg envConfig, cfgs ...*aws.Config) (*Session, error) {
 	cfg := defaults.Config()
 	handlers := defaults.Handlers()
 
@@ -319,9 +330,7 @@ func newSession(opts Options, envCfg envConfig, cfgs ...*aws.Config) (*Session, 
 		return nil, err
 	}
 
-	if err := mergeConfigSrcs(cfg, userCfg, envCfg, sharedCfg, handlers, opts); err != nil {
-		return nil, err
-	}
+	mergeConfigSrcs(cfg, userCfg, envCfg, sharedCfg, handlers)
 
 	s := &Session{
 		Config:   cfg,
@@ -340,6 +349,9 @@ func newSession(opts Options, envCfg envConfig, cfgs ...*aws.Config) (*Session, 
 	return s, nil
 }
 
+<<<<<<< HEAD
+func mergeConfigSrcs(cfg, userCfg *aws.Config, envCfg envConfig, sharedCfg sharedConfig, handlers request.Handlers) {
+=======
 func loadCustomCABundle(s *Session, bundle io.Reader) error {
 	var t *http.Transport
 	switch v := s.Config.HTTPClient.Transport.(type) {
@@ -386,6 +398,7 @@ func loadCertPool(r io.Reader) (*x509.CertPool, error) {
 }
 
 func mergeConfigSrcs(cfg, userCfg *aws.Config, envCfg envConfig, sharedCfg sharedConfig, handlers request.Handlers, sessOpts Options) error {
+>>>>>>> f9893ab8f... provider/aws: Bump aws/sdk to 1.7.9. Fixes at least 1 RDS bug
 	// Merge in user provided configuration
 	cfg.MergeIn(userCfg)
 
@@ -409,11 +422,6 @@ func mergeConfigSrcs(cfg, userCfg *aws.Config, envCfg envConfig, sharedCfg share
 			cfgCp.Credentials = credentials.NewStaticCredentialsFromCreds(
 				sharedCfg.AssumeRoleSource.Creds,
 			)
-			if len(sharedCfg.AssumeRole.MFASerial) > 0 && sessOpts.AssumeRoleTokenProvider == nil {
-				// AssumeRole Token provider is required if doing Assume Role
-				// with MFA.
-				return AssumeRoleTokenProviderNotSetError{}
-			}
 			cfg.Credentials = stscreds.NewCredentials(
 				&Session{
 					Config:   &cfgCp,
@@ -423,16 +431,11 @@ func mergeConfigSrcs(cfg, userCfg *aws.Config, envCfg envConfig, sharedCfg share
 				func(opt *stscreds.AssumeRoleProvider) {
 					opt.RoleSessionName = sharedCfg.AssumeRole.RoleSessionName
 
-					// Assume role with external ID
 					if len(sharedCfg.AssumeRole.ExternalID) > 0 {
 						opt.ExternalID = aws.String(sharedCfg.AssumeRole.ExternalID)
 					}
 
-					// Assume role with MFA
-					if len(sharedCfg.AssumeRole.MFASerial) > 0 {
-						opt.SerialNumber = aws.String(sharedCfg.AssumeRole.MFASerial)
-						opt.TokenProvider = sessOpts.AssumeRoleTokenProvider
-					}
+					// MFA not supported
 				},
 			)
 		} else if len(sharedCfg.Creds.AccessKeyID) > 0 {
@@ -453,33 +456,6 @@ func mergeConfigSrcs(cfg, userCfg *aws.Config, envCfg envConfig, sharedCfg share
 			})
 		}
 	}
-
-	return nil
-}
-
-// AssumeRoleTokenProviderNotSetError is an error returned when creating a session when the
-// MFAToken option is not set when shared config is configured load assume a
-// role with an MFA token.
-type AssumeRoleTokenProviderNotSetError struct{}
-
-// Code is the short id of the error.
-func (e AssumeRoleTokenProviderNotSetError) Code() string {
-	return "AssumeRoleTokenProviderNotSetError"
-}
-
-// Message is the description of the error
-func (e AssumeRoleTokenProviderNotSetError) Message() string {
-	return fmt.Sprintf("assume role with MFA enabled, but AssumeRoleTokenProvider session option not set.")
-}
-
-// OrigErr is the underlying error that caused the failure.
-func (e AssumeRoleTokenProviderNotSetError) OrigErr() error {
-	return nil
-}
-
-// Error satisfies the error interface.
-func (e AssumeRoleTokenProviderNotSetError) Error() string {
-	return awserr.SprintError(e.Code(), e.Message(), "", nil)
 }
 
 type credProviderError struct {

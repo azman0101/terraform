@@ -1,3 +1,9 @@
+## 0.8.8-f-aws-sdk-179 (March 2, 2017)
+
+IMPROVEMENTS:
+
+ * provider/aws: Bump aws/sdk to 1.7.9. Fixes at least 1 RDS bug ([#12680](https://github.com/hashicorp/terraform/issues/12680))
+
 ## 0.8.8 (March 2, 2017)
 
 BACKWARDS INCOMPATIBILITIES / NOTES:
